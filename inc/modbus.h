@@ -36,7 +36,6 @@
 #define MODBUS_DEFAULT_BYTE_TIMEOUT       (50)       /* 毫秒,用于计算一帧的结束 */
 #define MODBUS_DEFAULT_RESPONSE_TIMEOUT   (2000)     /* 毫秒 */
 #define MODBUS_DEFAULT_INDICATION_TIMEOUT (30*1000)  /* 30秒 */
-#define MODBUS_DEFAULT_REG_SIZE (32)
 
 #define _REPORT_SLAVE_ID 180
 #define LIBMODBUS_VERSION_STRING "3.1.7"
@@ -47,6 +46,26 @@
  * address (1 byte) - CRC (2 bytes) = 253 bytes.
  */
 #define MODBUS_MAX_PDU_LENGTH              253
+
+/* Modbus_Application_Protocol_V1_1b.pdf (chapter 6 section 1 page 12)
+ * Quantity of Coils to read (2 bytes): 1 to 2000 (0x7D0)
+ * (chapter 6 section 11 page 29)
+ * Quantity of Coils to write (2 bytes): 1 to 1968 (0x7B0)
+ */
+#define MODBUS_MAX_READ_BITS              2000
+#define MODBUS_MAX_WRITE_BITS             1968
+
+/* Modbus_Application_Protocol_V1_1b.pdf (chapter 6 section 3 page 15)
+ * Quantity of Registers to read (2 bytes): 1 to 125 (0x7D)
+ * (chapter 6 section 12 page 31)
+ * Quantity of Registers to write (2 bytes) 1 to 123 (0x7B)
+ * (chapter 6 section 17 page 38)
+ * Quantity of Registers to write in R/W registers (2 bytes) 1 to 121 (0x79)
+ */
+#define MODBUS_MAX_READ_REGISTERS          125
+#define MODBUS_MAX_WRITE_REGISTERS         123
+#define MODBUS_MAX_WR_WRITE_REGISTERS      121
+#define MODBUS_MAX_WR_READ_REGISTERS       125
 
 /* Modbus function codes */
 #define MODBUS_FC_READ_COILS                0x01
@@ -82,10 +101,6 @@ enum
 
 typedef struct _modbus_config
 {
-    uint16_t  reg1MaxSize;                                   /* 寄存器数量 */
-    uint16_t  reg2MaxSize;
-    uint16_t  reg3MaxSize;
-    uint16_t  reg4MaxSize;
     uint32_t  byteTimeout;                             
     uint32_t  responeTimeout;                                /* 应答超时时间 */
     uint32_t  indicationTimeout;                             /* 未收到指令的超时时间 */
@@ -163,11 +178,6 @@ int modbus_set_byte_timeout(modbus_t *mb, uint32_t msec);
 int modbus_get_response_timeout(modbus_t *mb, uint32_t *msec);
 int modbus_set_response_timeout(modbus_t *mb, uint32_t msec);
 
-int modbus_set_regmaxsize(modbus_t *mb,
-                          uint16_t reg1Size,
-                          uint16_t reg2Size,
-                          uint16_t reg3Size,
-                          uint16_t reg4Size);
 
 int modbus_read_bits(modbus_t *mb, int addr, int nb, uint8_t *dest);
 int modbus_read_input_bits(modbus_t *mb, int addr, int nb, uint8_t *dest);

@@ -69,10 +69,6 @@ int modbus_init(modbus_t *mb)
     {
         return -1;
     }
-    mb->cfg->reg1MaxSize = MODBUS_DEFAULT_REG_SIZE;
-    mb->cfg->reg2MaxSize = MODBUS_DEFAULT_REG_SIZE;
-    mb->cfg->reg3MaxSize = MODBUS_DEFAULT_REG_SIZE;
-    mb->cfg->reg4MaxSize = MODBUS_DEFAULT_REG_SIZE;
 
     mb->cfg->byteTimeout = MODBUS_DEFAULT_BYTE_TIMEOUT;
     mb->cfg->responeTimeout = MODBUS_DEFAULT_RESPONSE_TIMEOUT;
@@ -440,12 +436,12 @@ int modbus_read_bits(modbus_t *mb, int addr, int nb, uint8_t *dest)
         return -1;
     }
 
-    if(nb > mb->cfg->reg1MaxSize) 
+    if(nb > MODBUS_MAX_READ_BITS) 
     {
         if(mb->debug) 
         {
             log_info("ERROR Too many bits requested (%d > %d)\n",
-                    nb, mb->cfg->reg1MaxSize);
+                    nb, MODBUS_MAX_READ_BITS);
         }
         return -1;
     }
@@ -469,12 +465,12 @@ int modbus_read_input_bits(modbus_t *mb, int addr, int nb, uint8_t *dest)
         return -1;
     }
 
-    if(nb > mb->cfg->reg2MaxSize) 
+    if(nb > MODBUS_MAX_READ_BITS) 
     {
         if(mb->debug) 
         {
             log_info("ERROR Too many input bits requested (%d > %d)\n",
-                    nb, mb->cfg->reg2MaxSize);
+                    nb, MODBUS_MAX_READ_BITS);
         }
         return -1;
     }
@@ -533,12 +529,12 @@ int modbus_read_registers(modbus_t *mb, int addr, int nb, uint16_t *dest)
     {
         return -1;
     }
-    if(nb > mb->cfg->reg3MaxSize) 
+    if(nb > MODBUS_MAX_READ_REGISTERS) 
     {
         if(mb->debug) 
         {
             log_info("ERROR Too many registers requested (%d > %d)\n",
-                    nb, mb->cfg->reg3MaxSize);
+                    nb, MODBUS_MAX_READ_REGISTERS);
         }
         return -1;
     }
@@ -555,12 +551,12 @@ int modbus_read_input_registers(modbus_t *mb, int addr, int nb, uint16_t *dest)
     {
         return -1;
     }
-    if(nb > mb->cfg->reg4MaxSize) 
+    if(nb > MODBUS_MAX_READ_REGISTERS) 
     {
         if(mb->debug) 
         {
             log_info("ERROR Too many input registers requested (%d > %d)\n",
-                    nb, mb->cfg->reg4MaxSize);
+                    nb, MODBUS_MAX_READ_REGISTERS);
         }
         return -1;
     }
@@ -636,12 +632,12 @@ int modbus_write_bits(modbus_t *mb, int addr, int nb, const uint8_t *src)
         return -1;
     }
 
-    if(nb > mb->cfg->reg1MaxSize) 
+    if(nb > MODBUS_MAX_WRITE_BITS) 
     {
         if (mb->debug) 
         {
             log_warn("ERROR Writing too many bits (%d > %d)\n",
-                    nb, mb->cfg->reg1MaxSize);
+                    nb, MODBUS_MAX_WRITE_BITS);
         }
         return -1;
     }
@@ -698,12 +694,12 @@ int modbus_write_registers(modbus_t *mb, int addr, int nb, const uint16_t *src)
         return -1;
     }
 
-    if(nb > mb->cfg->reg3MaxSize) 
+    if(nb > MODBUS_MAX_WRITE_REGISTERS) 
     {
         if(mb->debug)
         {
             log_warn("ERROR Trying to write to too many registers (%d > %d)\n",
-                    nb, mb->cfg->reg3MaxSize);
+                    nb, MODBUS_MAX_WRITE_REGISTERS);
         }
         return -1;
     }
@@ -786,22 +782,22 @@ int modbus_write_and_read_registers(modbus_t *mb,
         return -1;
     }
 
-    if(writeNb > mb->cfg->reg3MaxSize) 
+    if(writeNb > MODBUS_MAX_WR_WRITE_REGISTERS) 
     {
         if(mb->debug) 
         {
             log_err("ERROR Too many registers to write (%d > %d)\n",
-                    writeNb, mb->cfg->reg3MaxSize);
+                    writeNb, MODBUS_MAX_WR_WRITE_REGISTERS);
         }
         return -1;
     }
 
-    if(readNb > mb->cfg->reg4MaxSize) 
+    if(readNb > MODBUS_MAX_WR_READ_REGISTERS) 
     {
         if(mb->debug) 
         {
             log_err("ERROR Too many registers requested (%d > %d)\n",
-                    readNb, mb->cfg->reg4MaxSize);
+                    readNb, MODBUS_MAX_WR_READ_REGISTERS);
         }
         return -1;
     }
@@ -885,23 +881,6 @@ int modbus_set_response_timeout(modbus_t *mb, uint32_t msec)
         return -1;
     }
     mb->cfg->responeTimeout = msec;
-    return 0;
-}
-
-int modbus_set_regmaxsize(modbus_t *mb,
-                           uint16_t reg1Size,
-                           uint16_t reg2Size,
-                           uint16_t reg3Size,
-                           uint16_t reg4Size)
-{
-    if(mb == NULL) 
-    {
-        return -1;
-    }
-    mb->cfg->reg1MaxSize = reg1Size;
-    mb->cfg->reg2MaxSize = reg2Size;
-    mb->cfg->reg3MaxSize = reg3Size;
-    mb->cfg->reg4MaxSize = reg4Size;
     return 0;
 }
 /* SLAVE */
@@ -1124,15 +1103,14 @@ int modbus_reply(modbus_t *mb, const uint8_t *req,
         /* The mapping can be shifted to reduce memory consumption and it
            doesn't always start at address zero. */
         int mappingAddress = address - startBits;
-        uint16_t maxSize = isInput ? mb->cfg->reg2MaxSize : mb->cfg->reg1MaxSize;
 
-        if(nb < 1 ||maxSize < nb) 
+        if(nb < 1 || MODBUS_MAX_READ_BITS < nb) 
         {
             rspLength = response_exception(
                 mb, &sft, MODBUS_EXCEPTION_ILLEGAL_DATA_VALUE, rsp);
             if(mb->debug) 
             {
-                log_err("Illegal nb of values %d in %s (max %d)\n", nb, name, maxSize);
+                log_err("Illegal nb of values %d in %s (max %d)\n", nb, name, MODBUS_MAX_READ_BITS);
             }
             
         } 
@@ -1167,15 +1145,14 @@ int modbus_reply(modbus_t *mb, const uint8_t *req,
         /* The mapping can be shifted to reduce memory consumption and it
            doesn't always start at address zero. */
         int mappingAddress = address - startRegisters;
-        uint16_t maxSize = isInput ? mb->cfg->reg3MaxSize : mb->cfg->reg4MaxSize;
 
-        if(nb < 1 || maxSize < nb) 
+        if(nb < 1 || MODBUS_MAX_READ_REGISTERS < nb) 
         {
             rspLength = response_exception(
                 mb, &sft, MODBUS_EXCEPTION_ILLEGAL_DATA_VALUE, rsp);
             if(mb->debug) 
             {
-                log_err("Illegal nb of values %d in %s (max %d)\n", nb, name, maxSize);
+                log_err("Illegal nb of values %d in %s (max %d)\n", nb, name, MODBUS_MAX_READ_REGISTERS);
             }
         }
         else if(mappingAddress < 0 || (mappingAddress + nb) > nbRegisters) 
@@ -1266,8 +1243,8 @@ int modbus_reply(modbus_t *mb, const uint8_t *req,
         int nb = (req[offset + 3] << 8) + req[offset + 4];
         int nbBits = req[offset + 5];
         int mappingAddress = address - mbMapping->startBits;
-        uint16_t maxSize = mb->cfg->reg1MaxSize;
-        if(nb < 1 || maxSize < nb || nbBits * 8 < nb) {
+
+        if(nb < 1 || MODBUS_MAX_WRITE_BITS < nb || nbBits * 8 < nb) {
             /* May be the indication has been truncated on reading because of
              * invalid address (eg. nb is 0 but the request contains values to
              * write) so it's necessary to flush. */
@@ -1276,7 +1253,7 @@ int modbus_reply(modbus_t *mb, const uint8_t *req,
             if(mb->debug) 
             {
                 log_err("Illegal number of values %d in write_bits (max %d)\n",
-                nb, maxSize);
+                nb, MODBUS_MAX_WRITE_BITS);
             } 
         } 
         else if(mappingAddress < 0 ||
@@ -1308,14 +1285,14 @@ int modbus_reply(modbus_t *mb, const uint8_t *req,
         int nb = (req[offset + 3] << 8) + req[offset + 4];
         int nbBytes = req[offset + 5];
         int mappingAddress = address - mbMapping->startRegisters;
-        uint16_t maxSize = mb->cfg->reg3MaxSize;
-        if (nb < 1 || maxSize < nb || nbBytes != nb * 2) {
+        
+        if (nb < 1 || MODBUS_MAX_WRITE_REGISTERS < nb || nbBytes != nb * 2) {
             rspLength = response_exception(
                 mb, &sft, MODBUS_EXCEPTION_ILLEGAL_DATA_VALUE, rsp);
             if(mb->debug) 
             {
                 log_err("Illegal number of values %d in write_registers (max %d)\n",
-                nb, maxSize);
+                nb, MODBUS_MAX_WRITE_REGISTERS);
             } 
         } 
         else if(mappingAddress < 0 ||
@@ -1389,8 +1366,8 @@ int modbus_reply(modbus_t *mb, const uint8_t *req,
         int mappingAddress = address - mbMapping->startRegisters;
         int mappingAddress_write = address_write - mbMapping->startRegisters;
 
-        if(nbWrite < 1 || mb->cfg->reg3MaxSize < nbWrite ||
-            nb < 1 || mb->cfg->reg4MaxSize < nb ||
+        if(nbWrite < 1 || MODBUS_MAX_WR_WRITE_REGISTERS < nbWrite ||
+            nb < 1 || MODBUS_MAX_WR_READ_REGISTERS < nb ||
             nbWrite_bytes != nbWrite * 2) 
         {
             rspLength = response_exception(
@@ -1398,7 +1375,7 @@ int modbus_reply(modbus_t *mb, const uint8_t *req,
             if(mb->debug) 
             {
                 log_err("Illegal nb of values (W%d, R%d) in write_and_read_registers (max W%d, R%d)\n",
-                nbWrite, nb, mb->cfg->reg3MaxSize, mb->cfg->reg4MaxSize);
+                nbWrite, nb, MODBUS_MAX_WR_WRITE_REGISTERS, MODBUS_MAX_WR_READ_REGISTERS);
             }   
         } 
         else if(mappingAddress < 0 ||
