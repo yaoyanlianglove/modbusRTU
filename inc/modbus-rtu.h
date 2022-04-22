@@ -47,6 +47,7 @@ typedef struct _modbus_backend
 struct _modbus
 {
     mosbus_stat_t                stat;
+    void                         *uartHandle;                 /* 串口句柄 */
     uint8_t                      *rxBuffer;
     uint8_t                      rxCount;
     uint8_t                      debug;                       /* 0不打印调试信息 1打印调试信息 */
