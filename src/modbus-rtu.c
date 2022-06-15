@@ -279,7 +279,7 @@ modbus_t* modbus_new_rtu(void)
         _modbus_rtu_free(mb);
         return NULL;
     }
-    mb->rxBuffer = (uint8_t *)modbus_malloc_callback(32);
+    mb->rxBuffer = (uint8_t *)modbus_malloc_callback(256);
     if(mb->rxBuffer == NULL) 
     {
         _modbus_rtu_free(mb);
