@@ -248,8 +248,13 @@ static void _modbus_rtu_free(modbus_t* mb)
     }
     if(mb->rxBuffer != NULL)
     {
-    	modbus_free_callback(mb->rxBuffer);
+        modbus_free_callback(mb->rxBuffer);
         mb->rxBuffer = NULL;
+    }
+    if(mb->txBuffer != NULL)
+    {
+        modbus_free_callback(mb->txBuffer);
+        mb->txBuffer = NULL;
     }
 }
 const modbus_backend_t _modbus_rtu_backend = {
@@ -281,6 +286,12 @@ modbus_t* modbus_new_rtu(void)
     }
     mb->rxBuffer = (uint8_t *)modbus_malloc_callback(256);
     if(mb->rxBuffer == NULL) 
+    {
+        _modbus_rtu_free(mb);
+        return NULL;
+    }
+    mb->txBuffer = (uint8_t *)modbus_malloc_callback(256);
+    if(mb->txBuffer == NULL) 
     {
         _modbus_rtu_free(mb);
         return NULL;

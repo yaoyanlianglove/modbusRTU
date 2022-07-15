@@ -49,6 +49,7 @@ struct _modbus
     mosbus_stat_t                stat;
     void                         *uartHandle;                 /* 串口句柄 */
     uint8_t                      *rxBuffer;
+    uint8_t                      *txBuffer;
     uint8_t                      rxCount;
     uint8_t                      debug;                       /* 0不打印调试信息 1打印调试信息 */
     uint8_t                      slave;                       /* 从机地址 */
